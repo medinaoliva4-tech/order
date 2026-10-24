@@ -2,6 +2,8 @@
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { createHabit, deleteHabit, setHabitDay } from "@/app/habits";
 import { addDays, iso, parse } from "@/lib/dates";
+import { HabitCardSkeleton } from "@/components/Skeletons";
+import { SubmitButton } from "@/components/ui";
 
 export type Habit = { id: string; name: string; emoji: string; color: string };
 
@@ -54,7 +56,7 @@ function Year({ days, today, color, toggle }: { days: Set<string>; today: string
               key={d}
               onClick={() => toggle(d)}
               title={d}
-              className="aspect-square rounded-[3px] transition hover:scale-125"
+              className="aspect-square rounded-[3px] transition-[background-color,transform] duration-200 hover:scale-125 active:scale-90"
               style={{ background: days.has(d) ? color : EMPTY }}
             />
           ),
@@ -71,7 +73,7 @@ function Week({ days, today, color, toggle }: { days: Set<string>; today: string
         <button key={d} onClick={() => toggle(d)} className="flex flex-col items-center gap-1.5">
           <span className="text-[10px] text-mute">{WD[parse(d).getDay()]}</span>
           <span
-            className="grid size-9 place-items-center rounded-full text-sm transition hover:scale-105"
+            className="grid size-9 place-items-center rounded-full text-sm transition-[background-color,color,transform] duration-200 hover:scale-105 active:scale-90"
             style={{ background: days.has(d) ? color : EMPTY, color: days.has(d) ? "#111" : "#8b8b92" }}
           >
             {parse(d).getDate()}
@@ -82,8 +84,9 @@ function Week({ days, today, color, toggle }: { days: Set<string>; today: string
   );
 }
 
-function HabitCard({ habit, initial, view, today }: { habit: Habit; initial: string[]; view: "year" | "week"; today: string }) {
+function HabitCard({ habit, initial, view, today, index }: { habit: Habit; initial: string[]; view: "year" | "week"; today: string; index: number }) {
   const [days, setDays] = useState(() => new Set(initial));
+  const [removing, setRemoving] = useState(false);
   const [, start] = useTransition();
   const toggle = (day: string) => {
     const on = !days.has(day);
@@ -97,7 +100,10 @@ function HabitCard({ habit, initial, view, today }: { habit: Habit; initial: str
   };
   const doneToday = days.has(today);
   return (
-    <section className="glass space-y-3 p-4">
+    <section
+      className={`glass animate-rise space-y-3 p-4 transition-all duration-300 ${removing ? "scale-95 opacity-0" : ""}`}
+      style={{ animationDelay: `${index * 60}ms` }}
+    >
       <div className="flex items-center gap-3">
         <span className="grid size-9 place-items-center rounded-xl text-lg" style={{ background: `${habit.color}22` }}>{habit.emoji}</span>
         <div className="min-w-0 flex-1">
@@ -107,19 +113,26 @@ function HabitCard({ habit, initial, view, today }: { habit: Habit; initial: str
         <button
           onClick={() => toggle(today)}
           aria-label="Marcar hoy"
-          className="grid size-10 place-items-center rounded-xl border text-lg transition"
-          style={{ borderColor: habit.color, background: doneToday ? habit.color : "transparent", color: doneToday ? "#111" : habit.color }}
+          className={`grid size-10 place-items-center rounded-xl border text-lg transition-[background-color,color,box-shadow] duration-200 active:scale-90 ${doneToday ? "animate-pop" : ""}`}
+          style={{
+            borderColor: habit.color,
+            background: doneToday ? habit.color : "transparent",
+            color: doneToday ? "#111" : habit.color,
+            boxShadow: doneToday ? `0 0 18px ${habit.color}55` : "none",
+          }}
         >
           ✓
         </button>
       </div>
-      {view === "year" ? (
-        <Year days={days} today={today} color={habit.color} toggle={toggle} />
-      ) : (
-        <Week days={days} today={today} color={habit.color} toggle={toggle} />
-      )}
-      <form action={deleteHabit.bind(null, habit.id)} onSubmit={(e) => !confirm(`¿Eliminar "${habit.name}"?`) && e.preventDefault()}>
-        <button className="text-[11px] text-mute hover:text-red-400">Eliminar hábito</button>
+      <div key={view} className="animate-fade">
+        {view === "year" ? (
+          <Year days={days} today={today} color={habit.color} toggle={toggle} />
+        ) : (
+          <Week days={days} today={today} color={habit.color} toggle={toggle} />
+        )}
+      </div>
+      <form action={deleteHabit.bind(null, habit.id)} onSubmit={(e) => (confirm(`¿Eliminar "${habit.name}"?`) ? setRemoving(true) : e.preventDefault())}>
+        <SubmitButton className="text-[11px] text-mute transition hover:text-red-400">Eliminar hábito</SubmitButton>
       </form>
     </section>
   );
@@ -134,18 +147,34 @@ export default function HabitsView({ habits, logs }: { habits: Habit[]; logs: Re
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-light">Hábitos</h1>
-        <div className="glass flex gap-1 rounded-full p-1 text-xs">
+        <div className="glass relative flex rounded-full p-1 text-xs">
+          <span
+            aria-hidden
+            className="absolute top-1 bottom-1 left-1 w-[4.5rem] rounded-full bg-white/15 transition-transform duration-300 ease-[cubic-bezier(0.3,1.3,0.5,1)]"
+            style={{ transform: view === "year" ? "translateX(100%)" : "none" }}
+          />
           {(["week", "year"] as const).map((v) => (
-            <button key={v} onClick={() => setView(v)} className={`rounded-full px-3 py-1.5 ${view === v ? "bg-white/15" : "text-mute"}`}>
+            <button
+              key={v}
+              onClick={() => setView(v)}
+              className={`relative w-[4.5rem] rounded-full py-1.5 transition-colors duration-300 ${view === v ? "text-white" : "text-mute"}`}
+            >
               {v === "year" ? "Año" : "Semana"}
             </button>
           ))}
         </div>
       </div>
 
-      {today &&
-        habits.map((h) => <HabitCard key={h.id} habit={h} initial={logs[h.id] ?? []} view={view} today={today} />)}
-      {habits.length === 0 && <p className="glass p-6 text-center text-mute">Crea tu primer hábito.</p>}
+      {today
+        ? habits.map((h, i) => <HabitCard key={h.id} habit={h} initial={logs[h.id] ?? []} view={view} today={today} index={i} />)
+        : habits.map((h) => <HabitCardSkeleton key={h.id} />)}
+      {habits.length === 0 && (
+        <div className="glass animate-rise space-y-1 p-8 text-center">
+          <p className="text-2xl">✦</p>
+          <p>Crea tu primer hábito</p>
+          <p className="text-sm text-mute">Abre “Nuevo hábito” aquí abajo para empezar tu racha.</p>
+        </div>
+      )}
 
       <details className="glass p-4">
         <summary className="cursor-pointer text-sm text-accent">+ Nuevo hábito</summary>
@@ -158,11 +187,11 @@ export default function HabitsView({ habits, logs }: { habits: Habit[]; logs: Re
             {COLORS.map((c, i) => (
               <label key={c}>
                 <input type="radio" name="color" value={c} defaultChecked={i === 0} className="peer sr-only" />
-                <span className="block size-7 cursor-pointer rounded-full ring-offset-2 ring-offset-black peer-checked:ring-2 ring-white" style={{ background: c }} />
+                <span className="block size-7 cursor-pointer rounded-full ring-white ring-offset-2 ring-offset-black transition peer-checked:scale-110 peer-checked:ring-2" style={{ background: c }} />
               </label>
             ))}
           </div>
-          <button className="btn btn-accent">Crear</button>
+          <SubmitButton className="btn btn-accent">Crear</SubmitButton>
         </form>
       </details>
     </div>

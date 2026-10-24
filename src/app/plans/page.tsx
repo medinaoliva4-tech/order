@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { SubmitButton } from "@/components/ui";
 import { money, shortDate } from "@/lib/dates";
 import { createPlan } from "./actions";
 
@@ -19,19 +20,19 @@ export default async function Plans() {
     <div className="space-y-4">
       <h1 className="text-3xl font-light">Planes</h1>
       <div className="grid gap-3 sm:grid-cols-2">
-        {(data ?? []).map((p) => {
+        {(data ?? []).map((p, i) => {
           const spent = p.plan_items.filter((i) => i.kind === "expense").reduce((s, i) => s + Number(i.amount), 0);
           const tasks = p.plan_items.filter((i) => i.kind === "task");
           const pct = p.budget > 0 ? Math.min(100, (spent / p.budget) * 100) : 0;
           return (
-            <Link key={p.id} href={`/plans/${p.id}`} className="glass block space-y-3 p-5 transition hover:bg-white/10">
+            <Link key={p.id} href={`/plans/${p.id}`} className="glass block animate-rise space-y-3 p-5 transition duration-200 hover:-translate-y-0.5 hover:bg-white/10 active:scale-[0.98]" style={{ animationDelay: `${i * 50}ms` }}>
               <div>
                 <p className="text-lg">{p.title}</p>
                 <p className="text-xs text-mute">{[p.place, p.starts_on && shortDate(p.starts_on)].filter(Boolean).join(" · ") || "Sin lugar ni fecha"}</p>
               </div>
               <div>
                 <div className="h-1.5 overflow-hidden rounded-full bg-white/10">
-                  <div className="h-full rounded-full bg-accent" style={{ width: `${pct}%` }} />
+                  <div className="h-full origin-left animate-grow rounded-full bg-accent" style={{ width: `${pct}%` }} />
                 </div>
                 <p className="mt-1.5 text-xs text-mute">{money(spent)} de {money(p.budget)}</p>
               </div>
@@ -48,7 +49,7 @@ export default async function Plans() {
           <input name="place" placeholder="Lugar" className="field" />
           <input name="starts_on" type="date" className="field" />
           <input name="budget" type="number" min={0} step="0.01" placeholder="Presupuesto €" className="field" />
-          <button className="btn btn-accent">Crear plan</button>
+          <SubmitButton className="btn btn-accent">Crear plan</SubmitButton>
         </form>
       </details>
     </div>
