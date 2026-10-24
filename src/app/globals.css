@@ -4,6 +4,38 @@
   --color-ink: #0a0a0c;
   --color-mute: #8b8b92;
   --color-accent: #e8d77a;
+
+  --animate-rise: rise 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  --animate-page: page 0.35s ease-out both;
+  --animate-pop: pop 0.4s cubic-bezier(0.3, 1.6, 0.5, 1);
+  --animate-grow: grow 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  --animate-fade: fade 0.3s ease-out both;
+
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(10px) scale(0.99); }
+    to { opacity: 1; transform: none; }
+  }
+  @keyframes page {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: none; }
+  }
+  @keyframes pop {
+    0% { transform: scale(1); }
+    40% { transform: scale(1.22); }
+    100% { transform: scale(1); }
+  }
+  @keyframes grow {
+    from { transform: scaleX(0); }
+    to { transform: scaleX(1); }
+  }
+  @keyframes fade {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes shimmer {
+    from { background-position: 200% 0; }
+    to { background-position: -200% 0; }
+  }
 }
 
 html { color-scheme: dark; }
@@ -31,15 +63,22 @@ body {
     outline: none;
   }
   .field::placeholder { color: var(--color-mute); }
-  .field:focus { border-color: rgba(232, 215, 122, 0.6); }
+  .field { transition: border-color 0.2s, background 0.2s, box-shadow 0.2s; }
+  .field:focus {
+    border-color: rgba(232, 215, 122, 0.6);
+    background: rgba(255, 255, 255, 0.07);
+    box-shadow: 0 0 0 4px rgba(232, 215, 122, 0.08);
+  }
   .btn {
     border-radius: 999px;
     border: 1px solid rgba(255, 255, 255, 0.1);
     background: rgba(255, 255, 255, 0.06);
     padding: 0.5rem 1rem;
     font-size: 0.875rem;
-    transition: background 0.15s;
+    transition: background 0.15s, transform 0.15s, opacity 0.15s;
   }
+  .btn:active { transform: scale(0.96); }
+  .btn:disabled { opacity: 0.6; cursor: default; }
   .btn:hover { background: rgba(255, 255, 255, 0.12); }
   .btn-accent {
     background: var(--color-accent);
@@ -48,8 +87,29 @@ body {
     font-weight: 600;
   }
   .btn-accent:hover { background: #f1e393; }
+  .skeleton {
+    background: linear-gradient(90deg, rgba(255, 255, 255, 0.04) 25%, rgba(255, 255, 255, 0.1) 50%, rgba(255, 255, 255, 0.04) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.6s linear infinite;
+    border-radius: 0.6rem;
+  }
 }
+
+/* Collapsible "+ Nuevo …" panels */
+details > summary { list-style: none; user-select: none; }
+details > summary::-webkit-details-marker { display: none; }
+details > summary { transition: opacity 0.15s; }
+details > summary:active { opacity: 0.6; }
+details[open] > summary ~ * { animation: rise 0.35s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
 
 /* Feel like a native app when launched from the home screen */
 html { -webkit-tap-highlight-color: transparent; overscroll-behavior-y: none; }
 input, select, textarea { font-size: 16px; } /* stops iOS zooming into fields */
+
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

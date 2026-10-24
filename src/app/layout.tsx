@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from "next";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import Nav from "@/components/Nav";
+import { SubmitButton } from "@/components/ui";
 import { signOut } from "./actions";
 
 export const metadata: Metadata = {
@@ -23,9 +24,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <span className="text-sm tracking-[0.35em] text-mute">ORDER</span>
           {user && (
             <div className="flex items-center gap-4 text-xs text-mute">
-              <Link href="/widget" className="hover:text-white">Widget</Link>
+              <Link href="/widget" className="transition hover:text-white">Widget</Link>
               <form action={signOut}>
-                <button className="hover:text-white">Salir</button>
+                <SubmitButton className="transition hover:text-white">Salir</SubmitButton>
               </form>
             </div>
           )}
