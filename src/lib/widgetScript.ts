@@ -14,16 +14,26 @@ let data = null;
 try { data = await req.loadJSON(); } catch (e) {}
 
 const family = config.widgetFamily || "medium";
+// Sized so the habits fill each widget without clipping (content area: small ~127pt, medium ~301x127, large ~301x317)
 const L = {
-  small: { habits: 1, weeks: 13, cell: 7, gap: 2 },
-  medium: { habits: 2, weeks: 36, cell: 6, gap: 2 },
-  large: { habits: 4, weeks: 36, cell: 6, gap: 2 },
-}[family] || { habits: 2, weeks: 36, cell: 6, gap: 2 };
+  small: { habits: 1, weeks: 9, cell: 10, gap: 3 },
+  medium: { habits: 2, weeks: 52, cell: 4, gap: 1 },
+  large: { habits: 3, weeks: 30, cell: 8, gap: 2 },
+}[family] || { habits: 2, weeks: 52, cell: 4, gap: 1 };
 
 const pad = (n) => (n < 10 ? "0" : "") + n;
 const iso = (d) => d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
 const today = new Date();
 const todayIso = iso(today);
+
+function streak(days) {
+  const set = new Set(days);
+  const d = new Date(today);
+  if (!set.has(iso(d))) d.setDate(d.getDate() - 1);
+  let n = 0;
+  while (set.has(iso(d))) { n++; d.setDate(d.getDate() - 1); }
+  return n;
+}
 const mute = new Color("#8b8b92");
 
 const w = new ListWidget();
@@ -64,7 +74,7 @@ if (!data) {
     t.font = Font.systemFont(12);
   }
   habits.forEach((h, i) => {
-    if (i > 0) w.addSpacer(8);
+    if (i > 0) w.addSpacer(family === "large" ? 12 : 8);
     const head = w.addStack();
     head.centerAlignContent();
     const name = head.addText(h.emoji + " " + h.name);
@@ -72,6 +82,9 @@ if (!data) {
     name.textColor = Color.white();
     name.lineLimit = 1;
     head.addSpacer();
+    const st = head.addText("🔥" + streak(h.days) + " ");
+    st.font = Font.systemFont(11);
+    st.textColor = mute;
     const done = h.days.indexOf(todayIso) >= 0;
     const mark = head.addText(done ? "●" : "○");
     mark.font = Font.systemFont(12);
@@ -81,15 +94,7 @@ if (!data) {
     const img = w.addImage(g.image);
     img.imageSize = g.size;
   });
-  if (family !== "small") {
-    w.addSpacer();
-    let foot = data.open_tasks + " tareas abiertas";
-    if (data.next_plan) foot += " · " + data.next_plan.title + " " + data.next_plan.starts_on.slice(5).split("-").reverse().join("/");
-    const f = w.addText(foot);
-    f.font = Font.systemFont(10);
-    f.textColor = mute;
-    f.lineLimit = 1;
-  }
+  w.addSpacer();
 }
 
 Script.setWidget(w);
