@@ -7,6 +7,7 @@ const TABS = [
   { href: "/", label: "Hábitos" },
   { href: "/movies", label: "Películas" },
   { href: "/spots", label: "Spots" },
+  { href: "/dream", label: "Dream" },
 ];
 
 export default function Nav() {

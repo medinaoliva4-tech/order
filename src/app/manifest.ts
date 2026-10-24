@@ -4,7 +4,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "Order",
     short_name: "Order",
-    description: "Hábitos, películas y spots",
+    description: "Hábitos, películas, spots y dream",
     start_url: "/",
     display: "standalone",
     background_color: "#0a0a0c",
