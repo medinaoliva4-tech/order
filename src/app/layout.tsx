@@ -9,7 +9,7 @@ import { signOut } from "./actions";
 
 export const metadata: Metadata = {
   title: "Order",
-  description: "Hábitos, planes, proyectos y spots",
+  description: "Hábitos, películas, spots y dream",
   appleWebApp: { capable: true, title: "Order", statusBarStyle: "black-translucent" },
   icons: { icon: "/icon-192.png", apple: "/apple-touch-icon.png" },
 };

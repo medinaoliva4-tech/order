@@ -5,9 +5,9 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 const TABS = [
   { href: "/", label: "Hábitos" },
-  { href: "/plans", label: "Planes" },
-  { href: "/projects", label: "Proyectos" },
+  { href: "/movies", label: "Películas" },
   { href: "/spots", label: "Spots" },
+  { href: "/dream", label: "Dream" },
 ];
 
 export default function Nav() {

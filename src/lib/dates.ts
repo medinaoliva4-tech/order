@@ -11,9 +11,3 @@ export const addDays = (s: string, n: number) => {
   d.setDate(d.getDate() + n);
   return iso(d);
 };
-
-export const money = (n: number) =>
-  Number(n).toLocaleString("es-ES", { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
-
-export const shortDate = (s: string) =>
-  parse(s).toLocaleDateString("es-ES", { day: "numeric", month: "short" });

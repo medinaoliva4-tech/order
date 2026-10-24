@@ -26,6 +26,8 @@ export function Sheet({
   );
 }
 
+export const useCloseSheet = () => useContext(SheetCtx);
+
 function CloseWhenDone() {
   const close = useContext(SheetCtx);
   const { pending } = useFormStatus();

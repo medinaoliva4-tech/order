@@ -11,6 +11,9 @@ export async function createSpot(form: FormData) {
     category: String(form.get("category") || "other"),
     detail: String(form.get("detail") ?? "").trim() || null,
     link: String(form.get("link") ?? "").trim() || null,
+    country: String(form.get("country") ?? "").trim() || null,
+    ticket_link: String(form.get("ticket_link") ?? "").trim() || null,
+    stay_link: String(form.get("stay_link") ?? "").trim() || null,
   });
   revalidatePath("/spots");
 }

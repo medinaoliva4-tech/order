@@ -51,17 +51,22 @@ export function CardsSkeleton() {
   );
 }
 
-export function DetailSkeleton() {
+export function PostersSkeleton() {
   return (
-    <div className="space-y-4">
-      <Bar className="h-3 w-20" />
-      <Bar className="h-8 w-52" />
-      {[0, 1].map((i) => (
-        <div key={i} className="glass space-y-3 p-5">
-          <Bar className="h-4 w-28" />
-          {[0, 1, 2].map((j) => <Bar key={j} className="h-3 w-full" />)}
-        </div>
-      ))}
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <Bar className="h-8 w-40" />
+        <Bar className="size-10 rounded-full" />
+      </div>
+      <Bar className="h-9 w-56 rounded-full" />
+      <div className="grid grid-cols-3 gap-x-3 gap-y-4 sm:grid-cols-4">
+        {[0, 1, 2, 3, 4, 5].map((i) => (
+          <div key={i} className="space-y-1.5">
+            <Bar className="aspect-[2/3] w-full rounded-xl" />
+            <Bar className="h-3 w-3/4" />
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

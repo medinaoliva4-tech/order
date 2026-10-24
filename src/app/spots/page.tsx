@@ -3,16 +3,21 @@ import { createClient } from "@/lib/supabase/server";
 import { SubmitButton } from "@/components/ui";
 import Menu from "@/components/Menu";
 import PageHeader from "@/components/PageHeader";
-import { Sheet, SheetForm, addButton } from "@/components/Sheet";
-import { createCategory, createSpot, deleteCategory, deleteSpot, toggleFavorite } from "./actions";
+import { Sheet, addButton } from "@/components/Sheet";
+import SpotForm from "@/components/SpotForm";
+import { createCategory, deleteCategory, deleteSpot, toggleFavorite } from "./actions";
 
 const BUILT_IN = [
   { value: "run", label: "Correr", icon: "🏃" },
   { value: "date", label: "Citas", icon: "🍷" },
   { value: "friend", label: "Amigos", icon: "👥" },
+  { value: "trip", label: "Viajes", icon: "✈️" },
   { value: "other", label: "Otros", icon: "📍" },
 ];
-type Spot = { id: string; category: string; name: string; detail: string | null; link: string | null; favorite: boolean };
+type Spot = {
+  id: string; category: string; name: string; detail: string | null; link: string | null; favorite: boolean;
+  country?: string | null; ticket_link?: string | null; stay_link?: string | null;
+};
 
 // waze:// opens the Waze app directly (from Safari and the home-screen app) and starts navigation.
 const waze = (q: string) => `waze://?q=${encodeURIComponent(q)}&navigate=yes`;
@@ -21,12 +26,14 @@ export default async function Spots({ searchParams }: { searchParams: Promise<{ 
   const { c } = await searchParams;
   const supabase = await createClient();
   const [{ data }, { data: custom }] = await Promise.all([
-    supabase.from("spots").select("id, category, name, detail, link, favorite")
+    // "*" so the page keeps working before the country/trip-link columns exist
+    supabase.from("spots").select("*")
       .order("favorite", { ascending: false }).order("created_at", { ascending: false }).returns<Spot[]>(),
     supabase.from("spot_categories").select("id, name, icon").order("created_at").returns<{ id: string; name: string; icon: string }[]>(),
   ]);
   const cats = [...BUILT_IN, ...(custom ?? []).map((k) => ({ value: k.id, label: k.name, icon: k.icon }))];
-  const catOf = (v: string) => cats.find((k) => k.value === v) ?? BUILT_IN[3];
+  const catOf = (v: string) => cats.find((k) => k.value === v) ?? BUILT_IN[BUILT_IN.length - 1];
+  const countries = [...new Set((data ?? []).map((s) => s.country).filter((x): x is string => !!x))].sort();
   const spots = (data ?? []).filter((s) => !c || s.category === c);
   const chip = (active: boolean) =>
     `shrink-0 rounded-full border px-3 py-1.5 text-sm transition active:scale-95 ${active ? "border-transparent bg-accent text-[#1a1700]" : "border-white/10 text-mute"}`;
@@ -35,15 +42,7 @@ export default async function Spots({ searchParams }: { searchParams: Promise<{ 
     <div className="space-y-3">
       <PageHeader title="Spots">
         <Sheet title="Guardar spot" label="Guardar spot" trigger="+" triggerClassName={addButton}>
-          <SheetForm action={createSpot} className="grid gap-3">
-            <input name="name" required placeholder="Nombre (Parque del Retiro, Ana…)" className="field" />
-            <select name="category" defaultValue={c ?? "run"} className="field">
-              {cats.map((k) => <option key={k.value} value={k.value}>{k.icon} {k.label}</option>)}
-            </select>
-            <input name="detail" placeholder="Dirección (para Waze) o nota" className="field" />
-            <input name="link" type="url" placeholder="Enlace extra (opcional)" className="field" />
-            <SubmitButton className="btn btn-accent">Guardar</SubmitButton>
-          </SheetForm>
+          <SpotForm cats={cats} countries={countries} initial={c && cats.some((k) => k.value === c) ? c : "run"} />
         </Sheet>
       </PageHeader>
 
@@ -76,26 +75,48 @@ export default async function Spots({ searchParams }: { searchParams: Promise<{ 
         <ul className="glass divide-y divide-white/5">
           {spots.map((s, i) => {
             const cat = catOf(s.category);
-            const route = waze([s.name, s.detail].filter(Boolean).join(", "));
+            const trip = s.category === "trip";
+            const route = waze([s.name, s.detail, s.country].filter(Boolean).join(", "));
+            const sub = [s.detail, s.country].filter(Boolean).join(" · ");
+            const head = (
+              <>
+                <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-white/5">{cat.icon}</span>
+                <span className="min-w-0">
+                  <span className="block truncate">{s.name}</span>
+                  {sub && <span className="block truncate text-xs text-mute">{sub}</span>}
+                </span>
+              </>
+            );
+            const pill = "rounded-full border border-white/10 px-2.5 py-1 text-xs text-mute transition hover:text-white active:scale-95";
             return (
-              <li key={s.id} className="flex animate-rise items-center gap-2 py-1 pl-4 pr-2" style={{ animationDelay: `${i * 40}ms` }}>
-                <a href={route} className="flex min-w-0 flex-1 items-center gap-3 py-2.5 transition active:opacity-60">
-                  <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-white/5">{cat.icon}</span>
-                  <span className="min-w-0">
-                    <span className="block truncate">{s.name}</span>
-                    {s.detail && <span className="block truncate text-xs text-mute">{s.detail}</span>}
-                  </span>
-                </a>
-                <form action={toggleFavorite.bind(null, s.id, !s.favorite)}>
-                  <SubmitButton className={`grid size-8 place-items-center text-lg transition active:scale-75 ${s.favorite ? "animate-pop text-accent" : "text-white/20 hover:text-white"}`} aria-label="Favorito">★</SubmitButton>
-                </form>
-                <Menu>
-                  <a href={route} className="menu-item">Ir con Waze</a>
-                  {s.link && <a href={s.link} target="_blank" rel="noreferrer" className="menu-item">Abrir enlace</a>}
-                  <form action={deleteSpot.bind(null, s.id)}>
-                    <SubmitButton className="menu-item danger">Eliminar</SubmitButton>
+              <li key={s.id} className="flex animate-rise items-start gap-2 py-1 pl-4 pr-2" style={{ animationDelay: `${i * 40}ms` }}>
+                <div className="min-w-0 flex-1 py-2.5">
+                  {trip ? (
+                    <div className="flex items-center gap-3">{head}</div>
+                  ) : (
+                    <a href={route} className="flex items-center gap-3 transition active:opacity-60">{head}</a>
+                  )}
+                  {(s.ticket_link || s.stay_link) && (
+                    <div className="mt-2 flex gap-2 pl-12">
+                      {s.ticket_link && <a href={s.ticket_link} target="_blank" rel="noreferrer" className={pill}>✈️ Boleto</a>}
+                      {s.stay_link && <a href={s.stay_link} target="_blank" rel="noreferrer" className={pill}>🏠 Estancia</a>}
+                    </div>
+                  )}
+                </div>
+                <div className="flex items-center gap-1 pt-2">
+                  <form action={toggleFavorite.bind(null, s.id, !s.favorite)}>
+                    <SubmitButton className={`grid size-8 place-items-center text-lg transition active:scale-75 ${s.favorite ? "animate-pop text-accent" : "text-white/20 hover:text-white"}`} aria-label="Favorito">★</SubmitButton>
                   </form>
-                </Menu>
+                  <Menu>
+                    {!trip && <a href={route} className="menu-item">Ir con Waze</a>}
+                    {s.ticket_link && <a href={s.ticket_link} target="_blank" rel="noreferrer" className="menu-item">Ver boleto</a>}
+                    {s.stay_link && <a href={s.stay_link} target="_blank" rel="noreferrer" className="menu-item">Ver estancia</a>}
+                    {s.link && <a href={s.link} target="_blank" rel="noreferrer" className="menu-item">Abrir enlace</a>}
+                    <form action={deleteSpot.bind(null, s.id)}>
+                      <SubmitButton className="menu-item danger">Eliminar</SubmitButton>
+                    </form>
+                  </Menu>
+                </div>
               </li>
             );
           })}
