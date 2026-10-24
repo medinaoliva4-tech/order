@@ -1,12 +1,12 @@
 # Order
 
-Organizador personal: **hábitos** (heatmap anual), **planes** (lugar, fecha, presupuesto, notas, tareas),
-**proyectos** con tareas y **spots** guardados (correr, citas, amigos). Next.js 15 + Supabase + Vercel.
+Organizador personal: **hábitos** (heatmap anual), **películas** (favoritas y por ver, con pósters de IMDb)
+y **spots** guardados (correr, citas, amigos…, abren en Waze). Next.js 15 + Supabase + Vercel.
 
 ## Setup
 
-1. **Supabase**: ejecuta en el SQL Editor, en orden, `supabase/migrations/0001_init.sql` y
-   `supabase/migrations/0002_life.sql` (las tablas de pedidos de `0001` ya no se usan).
+1. **Supabase**: ejecuta en el SQL Editor, en orden, los archivos de `supabase/migrations/`
+   (las tablas de pedidos, planes y proyectos ya no las usa la interfaz).
 2. **Variables**: copia `.env.example` a `.env.local` con `NEXT_PUBLIC_SUPABASE_URL` y
    `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
 3. **Local**: `npm install && npm run dev`.
