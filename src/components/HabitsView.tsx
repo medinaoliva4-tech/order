@@ -4,6 +4,9 @@ import { createHabit, deleteHabit, setHabitDay } from "@/app/habits";
 import { addDays, iso, parse } from "@/lib/dates";
 import { HabitCardSkeleton } from "@/components/Skeletons";
 import { SubmitButton } from "@/components/ui";
+import Menu from "@/components/Menu";
+import PageHeader from "@/components/PageHeader";
+import { Sheet, SheetForm, addButton } from "@/components/Sheet";
 
 export type Habit = { id: string; name: string; emoji: string; color: string };
 
@@ -105,15 +108,20 @@ function HabitCard({ habit, initial, view, today, index }: { habit: Habit; initi
       style={{ animationDelay: `${index * 60}ms` }}
     >
       <div className="flex items-center gap-3">
-        <span className="grid size-9 place-items-center rounded-xl text-lg" style={{ background: `${habit.color}22` }}>{habit.emoji}</span>
+        <span className="grid size-9 shrink-0 place-items-center rounded-xl text-lg" style={{ background: `${habit.color}22` }}>{habit.emoji}</span>
         <div className="min-w-0 flex-1">
           <p className="truncate font-medium">{habit.name}</p>
           <p className="text-xs text-mute">🔥 {streak(days, today)} · {days.size} días</p>
         </div>
+        <Menu>
+          <form action={deleteHabit.bind(null, habit.id)} onSubmit={(e) => (confirm(`¿Eliminar "${habit.name}"?`) ? setRemoving(true) : e.preventDefault())}>
+            <SubmitButton className="menu-item danger">Eliminar hábito</SubmitButton>
+          </form>
+        </Menu>
         <button
           onClick={() => toggle(today)}
           aria-label="Marcar hoy"
-          className={`grid size-10 place-items-center rounded-xl border text-lg transition-[background-color,color,box-shadow] duration-200 active:scale-90 ${doneToday ? "animate-pop" : ""}`}
+          className={`grid size-10 shrink-0 place-items-center rounded-xl border text-lg transition-[background-color,color,box-shadow] duration-200 active:scale-90 ${doneToday ? "animate-pop" : ""}`}
           style={{
             borderColor: habit.color,
             background: doneToday ? habit.color : "transparent",
@@ -131,9 +139,6 @@ function HabitCard({ habit, initial, view, today, index }: { habit: Habit; initi
           <Week days={days} today={today} color={habit.color} toggle={toggle} />
         )}
       </div>
-      <form action={deleteHabit.bind(null, habit.id)} onSubmit={(e) => (confirm(`¿Eliminar "${habit.name}"?`) ? setRemoving(true) : e.preventDefault())}>
-        <SubmitButton className="text-[11px] text-mute transition hover:text-red-400">Eliminar hábito</SubmitButton>
-      </form>
     </section>
   );
 }
@@ -144,26 +149,42 @@ export default function HabitsView({ habits, logs }: { habits: Habit[]; logs: Re
   useEffect(() => setToday(iso(new Date())), []);
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-light">Hábitos</h1>
+    <div className="space-y-3">
+      <PageHeader title="Hábitos">
         <div className="glass relative flex rounded-full p-1 text-xs">
           <span
             aria-hidden
-            className="absolute top-1 bottom-1 left-1 w-[4.5rem] rounded-full bg-white/15 transition-transform duration-300 ease-[cubic-bezier(0.3,1.3,0.5,1)]"
+            className="absolute top-1 bottom-1 left-1 w-16 rounded-full bg-white/15 transition-transform duration-300 ease-[cubic-bezier(0.3,1.3,0.5,1)]"
             style={{ transform: view === "year" ? "translateX(100%)" : "none" }}
           />
           {(["week", "year"] as const).map((v) => (
             <button
               key={v}
               onClick={() => setView(v)}
-              className={`relative w-[4.5rem] rounded-full py-1.5 transition-colors duration-300 ${view === v ? "text-white" : "text-mute"}`}
+              className={`relative w-16 rounded-full py-1.5 transition-colors duration-300 ${view === v ? "text-white" : "text-mute"}`}
             >
               {v === "year" ? "Año" : "Semana"}
             </button>
           ))}
         </div>
-      </div>
+        <Sheet title="Nuevo hábito" label="Nuevo hábito" trigger="+" triggerClassName={addButton}>
+          <SheetForm action={createHabit} className="space-y-4">
+            <div className="flex gap-2">
+              <input name="emoji" placeholder="🏃" maxLength={2} className="field w-16 text-center" />
+              <input name="name" required placeholder="Nombre del hábito" className="field" />
+            </div>
+            <div className="flex gap-2">
+              {COLORS.map((c, i) => (
+                <label key={c}>
+                  <input type="radio" name="color" value={c} defaultChecked={i === 0} className="peer sr-only" />
+                  <span className="block size-8 cursor-pointer rounded-full ring-white ring-offset-2 ring-offset-[#141416] transition peer-checked:scale-110 peer-checked:ring-2" style={{ background: c }} />
+                </label>
+              ))}
+            </div>
+            <SubmitButton className="btn btn-accent w-full">Crear hábito</SubmitButton>
+          </SheetForm>
+        </Sheet>
+      </PageHeader>
 
       {today
         ? habits.map((h, i) => <HabitCard key={h.id} habit={h} initial={logs[h.id] ?? []} view={view} today={today} index={i} />)
@@ -172,28 +193,9 @@ export default function HabitsView({ habits, logs }: { habits: Habit[]; logs: Re
         <div className="glass animate-rise space-y-1 p-8 text-center">
           <p className="text-2xl">✦</p>
           <p>Crea tu primer hábito</p>
-          <p className="text-sm text-mute">Abre “Nuevo hábito” aquí abajo para empezar tu racha.</p>
+          <p className="text-sm text-mute">Toca + arriba para empezar tu racha.</p>
         </div>
       )}
-
-      <details className="glass p-4">
-        <summary className="cursor-pointer text-sm text-accent">+ Nuevo hábito</summary>
-        <form action={createHabit} className="mt-4 space-y-3">
-          <div className="flex gap-2">
-            <input name="emoji" placeholder="🏃" maxLength={2} className="field w-16 text-center" />
-            <input name="name" required placeholder="Nombre del hábito" className="field" />
-          </div>
-          <div className="flex gap-2">
-            {COLORS.map((c, i) => (
-              <label key={c}>
-                <input type="radio" name="color" value={c} defaultChecked={i === 0} className="peer sr-only" />
-                <span className="block size-7 cursor-pointer rounded-full ring-white ring-offset-2 ring-offset-black transition peer-checked:scale-110 peer-checked:ring-2" style={{ background: c }} />
-              </label>
-            ))}
-          </div>
-          <SubmitButton className="btn btn-accent">Crear</SubmitButton>
-        </form>
-      </details>
     </div>
   );
 }

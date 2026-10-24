@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { shortDate } from "@/lib/dates";
 import CheckItem from "@/components/CheckItem";
+import Menu from "@/components/Menu";
+import PageHeader from "@/components/PageHeader";
 import { SubmitButton } from "@/components/ui";
 import { addTask, deleteProject, deleteTask, toggleTask } from "../actions";
 
@@ -19,17 +21,26 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
   const pct = tasks.length ? (done / tasks.length) * 100 : 0;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <Link href="/projects" className="text-sm text-mute transition hover:text-white">← Proyectos</Link>
-      <div className="flex items-end justify-between">
-        <h1 className="flex items-center gap-3 text-3xl font-light"><span className="size-3 rounded-full" style={{ background: project.color }} />{project.name}</h1>
-        <p className="text-sm text-mute">{done}/{tasks.length}</p>
-      </div>
-      <div className="h-1.5 overflow-hidden rounded-full bg-white/10">
+      <PageHeader title={<span className="flex items-center gap-3"><span className="size-3 shrink-0 rounded-full" style={{ background: project.color }} />{project.name}</span>}>
+        <span className="text-sm text-mute">{done}/{tasks.length}</span>
+        <Menu>
+          <form action={deleteProject.bind(null, id)}>
+            <SubmitButton className="menu-item danger">Eliminar proyecto</SubmitButton>
+          </form>
+        </Menu>
+      </PageHeader>
+      <div className="h-1 overflow-hidden rounded-full bg-white/10">
         <div className="h-full origin-left animate-grow rounded-full transition-[width] duration-500" style={{ width: `${pct}%`, background: project.color }} />
       </div>
-      <section className="glass animate-rise space-y-3 p-5">
-        <ul className="space-y-1">
+      <section className="glass animate-rise space-y-3 p-4">
+        <form action={addTask.bind(null, id)} className="flex gap-2">
+          <input name="title" required placeholder="Nueva tarea" className="field min-w-0 flex-1" />
+          <input name="due_on" type="date" aria-label="Fecha límite" className="field w-36" />
+          <SubmitButton aria-label="Añadir tarea">+</SubmitButton>
+        </form>
+        <ul>
           {tasks.map((t) => (
             <CheckItem
               key={t.id}
@@ -41,17 +52,9 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
               remove={deleteTask.bind(null, id, t.id)}
             />
           ))}
-          {tasks.length === 0 && <li className="text-sm text-mute">Sin tareas todavía.</li>}
+          {tasks.length === 0 && <li className="py-2 text-center text-sm text-mute">Sin tareas todavía.</li>}
         </ul>
-        <form action={addTask.bind(null, id)} className="flex flex-wrap gap-2">
-          <input name="title" required placeholder="Nueva tarea" className="field min-w-40 flex-1" />
-          <input name="due_on" type="date" className="field w-40" />
-          <SubmitButton className="btn btn-accent">Añadir</SubmitButton>
-        </form>
       </section>
-      <form action={deleteProject.bind(null, id)}>
-        <SubmitButton className="text-xs text-mute transition hover:text-red-400">Eliminar proyecto</SubmitButton>
-      </form>
     </div>
   );
 }

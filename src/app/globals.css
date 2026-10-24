@@ -113,3 +113,50 @@ input, select, textarea { font-size: 16px; } /* stops iOS zooming into fields */
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Dropdown menu (⋯) */
+.menu {
+  background: #1a1a1d;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 1rem;
+  padding: 0.35rem;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+}
+.menu-item {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 0.65rem;
+  padding: 0.55rem 0.75rem;
+  font-size: 0.875rem;
+  text-align: left;
+  transition: background 0.15s;
+}
+.menu-item:hover { background: rgba(255, 255, 255, 0.08); }
+.menu-item.danger { color: #f87171; }
+/* Lift a card above its neighbours while its menu is open */
+.glass:has([aria-expanded="true"]) { position: relative; z-index: 15; }
+
+/* Bottom sheet */
+dialog.sheet {
+  margin: auto auto 0;
+  width: 100%;
+  max-width: 34rem;
+  max-height: 85vh;
+  overflow-y: auto;
+  background: #141416;
+  color: inherit;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 1.75rem 1.75rem 0 0;
+  padding: 1.25rem 1.25rem calc(1.25rem + env(safe-area-inset-bottom));
+}
+dialog.sheet[open] { animation: sheet-up 0.35s cubic-bezier(0.2, 0.8, 0.2, 1); }
+dialog.sheet::backdrop { background: rgba(0, 0, 0, 0.55); backdrop-filter: blur(4px); }
+@media (min-width: 640px) {
+  dialog.sheet { margin: auto; border-radius: 1.75rem; padding-bottom: 1.25rem; }
+}
+@keyframes sheet-up {
+  from { transform: translateY(100%); }
+  to { transform: none; }
+}
