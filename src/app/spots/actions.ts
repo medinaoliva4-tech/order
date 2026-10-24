@@ -26,3 +26,18 @@ export async function deleteSpot(id: string) {
   await supabase.from("spots").delete().eq("id", id);
   revalidatePath("/spots");
 }
+
+export async function createCategory(form: FormData) {
+  const name = String(form.get("name") ?? "").trim();
+  if (!name) return;
+  const supabase = await createClient();
+  await supabase.from("spot_categories").insert({ name, icon: String(form.get("icon") ?? "").trim().slice(0, 2) || "📍" });
+  revalidatePath("/spots");
+}
+
+export async function deleteCategory(id: string) {
+  const supabase = await createClient();
+  await supabase.from("spots").update({ category: "other" }).eq("category", id);
+  await supabase.from("spot_categories").delete().eq("id", id);
+  revalidatePath("/spots");
+}
