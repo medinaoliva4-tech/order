@@ -19,7 +19,7 @@ export default async function WidgetPage() {
     "Instala Scriptable desde la App Store (gratis).",
     "Copia el script con el botón de abajo.",
     "En Scriptable toca +, pega el script y llámalo “Order”.",
-    "En la pantalla de inicio mantén pulsado → Editar → Añadir widget → Scriptable (pequeño, mediano o grande).",
+    "En la pantalla de inicio mantén pulsado → Editar → Añadir widget → Scriptable (pequeño = 1 hábito, mediano = 2, grande = 3).",
     "Mantén pulsado el widget → Editar widget → Script: Order.",
   ];
 
@@ -36,8 +36,8 @@ export default async function WidgetPage() {
       </ol>
       <CopyButton text={script} />
       <p className="text-xs text-mute">
-        El script lleva un token personal que solo permite leer el resumen del widget (hábitos, tareas abiertas y próximo plan).
-        Tocar el widget abre la app.
+        El script lleva un token personal que solo permite leer tus hábitos.
+        Tocar el widget abre la app. Si actualizas el script, vuelve a copiarlo y reemplázalo en Scriptable.
       </p>
       <form action={resetWidgetToken}>
         <button className="text-xs text-mute hover:text-red-400">Regenerar token (el widget actual dejará de funcionar)</button>
