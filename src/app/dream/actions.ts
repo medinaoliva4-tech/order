@@ -35,3 +35,26 @@ export async function saveSettings(form: FormData) {
   });
   revalidatePath("/dream");
 }
+
+export async function addExpense(form: FormData) {
+  const name = String(form.get("name") ?? "").trim();
+  if (!name) return;
+  const supabase = await createClient();
+  await supabase.from("dream_expenses").insert({
+    name,
+    amount: Math.max(0, Number(form.get("amount")) || 0),
+    period: form.get("period") === "year" ? "year" : "month",
+  });
+  revalidatePath("/dream");
+}
+
+export async function updateExpense(id: string, patch: { amount?: number; period?: "month" | "year" }) {
+  const supabase = await createClient();
+  await supabase.from("dream_expenses").update(patch).eq("id", id);
+}
+
+export async function deleteExpense(id: string) {
+  const supabase = await createClient();
+  await supabase.from("dream_expenses").delete().eq("id", id);
+  revalidatePath("/dream");
+}

@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import DreamCalculator, { type Stream } from "@/components/DreamCalculator";
+import DreamCalculator, { type Expense, type Stream } from "@/components/DreamCalculator";
 import PageHeader from "@/components/PageHeader";
 import { Sheet, SheetForm, addButton } from "@/components/Sheet";
 import { SubmitButton } from "@/components/ui";
@@ -9,11 +9,13 @@ const CURRENCIES = ["USD", "MXN", "EUR"];
 
 export default async function Dream() {
   const supabase = await createClient();
-  const [{ data: streams }, { data: settings }] = await Promise.all([
+  const [{ data: streams }, { data: settings }, { data: expenses }] = await Promise.all([
     supabase.from("dream_streams").select("id, source, name, price, clients").order("created_at").returns<Stream[]>(),
     supabase.from("dream_settings").select("goal, currency").maybeSingle(),
+    supabase.from("dream_expenses").select("id, name, amount, period").order("created_at").returns<Expense[]>(),
   ]);
   const rows = (streams ?? []).map((s) => ({ ...s, price: Number(s.price) }));
+  const costs = (expenses ?? []).map((e) => ({ ...e, amount: Number(e.amount) }));
   const goal = Number(settings?.goal ?? 0);
   const currency = settings?.currency ?? "USD";
   const sources = [...new Set(["Inherent", ...rows.map((s) => s.source)])];
@@ -51,7 +53,7 @@ export default async function Dream() {
           </SheetForm>
         </Sheet>
       </PageHeader>
-      <DreamCalculator streams={rows} goal={goal} currency={currency} />
+      <DreamCalculator streams={rows} expenses={costs} goal={goal} currency={currency} />
     </div>
   );
 }
